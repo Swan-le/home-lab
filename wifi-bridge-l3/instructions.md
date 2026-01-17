@@ -22,10 +22,10 @@ I’m using the official Raspberry Pi imager to flash the SD card, you can find 
 
 Customization Settings:
 
-- HostName: This is the name of your device, that shows up on your network once installation is complete.
-- User: This is how we will log into our Pi using SSH, or direct connect. Type in your username & password (Don’t forget what your wrote, otherwise you will need to re-flash the drive)
-- Wi-Fi: I personally had issues connecting to the Wi-Fi after filling out this information. I’m not exactly sure why this happened, either because my network is set to aWPA3, instead of WPA2, or something else. I’ll discuss how fix this issue later in the article. In the mean time, add your network SSID and Password so the Pi can connect to your LAN during boot.
-- Remote Access: Enable SSH. It’s key we ensure SSH Authentication is active. SSH is the only way we’ll be able to access the device wirelessly.
+- ***HostName***: This is the name of your device, that shows up on your network once installation is complete.
+- ***User***: This is how we will log into our Pi using SSH, or direct connect. Type in your username & password (Don’t forget what your wrote, otherwise you will need to re-flash the drive)
+- ***Wi-Fi***: I personally had issues connecting to the Wi-Fi after filling out this information. I’m not exactly sure why this happened, either because my network is set to aWPA3, instead of WPA2, or something else. I’ll discuss how fix this issue later in the article. In the mean time, add your network SSID and Password so the Pi can connect to your LAN during boot.
+- ***Remote Access***: Enable SSH. It’s key we ensure SSH Authentication is active. SSH is the only way we’ll be able to access the device wirelessly.
 
 ### Network Manager
 
@@ -46,8 +46,11 @@ As previously mentioned, when I input my SSID info and password on the Pi Imager
 I accessed the Pi via SSH/Ethernet at first because I didn’t have a micro-HDMI. To access the SSH, plug the Pi into your home router via Ethernet cable, once booted up, go to your Router and find the IP address. By default the Pi has ETH0 active, which is the Ethernet jack on your Pi. This is a sure proof way of getting access to your Pi. If you opt into using the Micro HDMI, its as straight forward as connecting everything together, and turning on the device.
 
 Once connected and IP in hand, run the ssh command to get access into the Pi. Type `SSH username@IP-address`, you will be prompted for a password and setting up a key for the first time:
-`ssh pi@192.168.1.22`
-`pi@192.168.1.22's Password:`
+
+```
+ssh pi@192.168.1.22
+pi@192.168.1.22's Password:
+```
 
 If you are getting an error for wrong password, ensure you are using the username of the device, not the HostName. Admittedly, I’ve done this more than a few times myself. Once connected you are good to move forward with the next steps.
 
@@ -81,7 +84,8 @@ Now that we have done all the prerequisite work on getting our Pi 5 set up it’
 ## 4.1 Identify the Ethernet device name
 Before we start configuring the Wifibridge, we first need to identify what connection we want the bridge on. Lets start with ifconfig. The output will be a series of devices that have network capabilities, Eth0, wlan0, wlan1, lo, etc. More often than not we are looking for eth0. Below is an example of the output you should receive.
 
-`eth0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500`
+```
+eth0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
         inet 10.15.0.1  netmask 255.255.255.0  broadcast 10.15.0.255
         ether 2a:cf:67:6c:15:6a  txqueuelen 1000  (Ethernet)
         RX packets 0  bytes 0 (0.0 B)
@@ -90,7 +94,7 @@ Before we start configuring the Wifibridge, we first need to identify what conne
         TX errors 0  dropped 17 overruns 0  carrier 0  collisions 0
         device interrupt 106  
 
-`lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536`
+lo: flags=73<UP,LOOPBACK,RUNNING>  mtu 65536
         inet 127.0.0.1  netmask 255.0.0.0
         inet6 ::1  prefixlen 128  scopeid 0x10<host>
         loop  txqueuelen 1000  (Local Loopback)
@@ -99,20 +103,22 @@ Before we start configuring the Wifibridge, we first need to identify what conne
         TX packets 16  bytes 2609 (2.5 KiB)
         TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
 
-`wlan0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500`
+wlan0: flags=4099<UP,BROADCAST,MULTICAST>  mtu 1500
         ether 2b:cf:47:6f:15:6b  txqueuelen 1000  (Ethernet)
         RX packets 0  bytes 0 (0.0 B)
         RX errors 0  dropped 0  overruns 0  frame 0
         TX packets 0  bytes 0 (0.0 B)
-        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0`
-
+        TX errors 0  dropped 0 overruns 0  carrier 0  collisions 0
+```
 Eth0 is known as Ethernet connection, wlan0 is known as wireless local area network. Since we are passing everything through Ethernet, eth0 is what we want. 
 
 ## 4.2 Configure the Wi-Fi Bridge
 
 Now that we’ve identified the connection for our Wifibridge, we will input a command that reconfigures the Wifi card to share all traffic with the Ethernet port, hence giving us the Wifibridge we want. Thanks to NetworkManager, this is done in one line. You will need to change `[interface]` to the actual network device name that you found, in my case that would be “eth0”. 
 
-```sudo nmcli c add con-name wifibridge type ethernet ifname [INTERFACE] ipv4.method shared ipv6.method ignore```
+```
+sudo nmcli c add con-name wifibridge type ethernet ifname [INTERFACE] ipv4.method shared ipv6.method ignore
+```
 
 Breaking down the Command:
 - nmcli - Command line tool to access NetworkManager
@@ -131,11 +137,13 @@ Before we can hi-five each other, lets ensure everything worked out properly. Ru
 
 If everything worked, you should have an output similar to mine:
 
-```NAME             UUID                                  TYPE    DEVICE 
+```
+NAME             UUID                                  TYPE    DEVICE 
 wifibridge          93cef4e4-0c3a-428c-cb05-fcdb5c224a4c  ethernet eth0   
 Tacos               8c6e2c2f-c01a-4984-ba9c-4e12c06022e1  wifi     wlan1  
 lo                  29a61894-7c8d-6f5e-9045-a0377762fe5f  loopback  lo     
-Wired connection 1  eabad213-36c0-303c-9ace-714485001b99  ethernet  --     ```
+Wired connection 1  eabad213-36c0-303c-9ace-714485001b99  ethernet  --
+```
 
 Notice, the device associated with each name, this is important, if there is no device name assigned to the wifibridge, you’ll have to go back and associate the device with the bridge.
 
